@@ -1,0 +1,102 @@
+
+#include <stdafx.h>
+
+using namespace std;
+
+
+int PrintModules(DWORD processID)
+{
+	HMODULE hMods[1024];
+	HANDLE hProcess;
+	DWORD cbNeeded;
+	unsigned int i;
+
+	ofstream allModules;
+	allModules.open("allModules.txt");
+
+	cout << "\nProcess ID: \n"<< processID << '\n';
+
+	// Get a handle to the process.
+
+	hProcess = OpenProcess(PROCESS_QUERY_INFORMATION |
+		PROCESS_VM_READ,
+		FALSE, processID);
+	if (NULL == hProcess) {
+		return 1;
+	}
+	else
+	{
+
+
+
+		// Get a list of all the modules in this process.
+
+		if (EnumProcessModules(hProcess, hMods, sizeof(hMods), &cbNeeded))
+		{
+			for (i = 0; i < (cbNeeded / sizeof(HMODULE)); i++)
+			{
+				TCHAR szModName[MAX_PATH];
+				GetWindowsDirectory(szModName, MAX_PATH);
+
+				// Get the full path to the module's file.
+
+				if (GetModuleFileNameEx(hProcess, hMods[i], szModName,
+					sizeof(szModName) / sizeof(TCHAR)))
+				{
+					// Print the module name and handle value
+					for (unsigned int r = 0; r < ((cbNeeded / sizeof(HMODULE))); r++)
+					{
+						allModules << " " << szModName[r] ;
+					}
+						allModules << "\n";
+					//_tprintf(TEXT("\t%s (0x%08X)\n"),szModName, hMods[i]); //can easily be c outed 
+					
+				}
+			}
+		}
+
+
+		// Release the handle to the process.
+
+		CloseHandle(hProcess);
+
+		return 0;
+	}
+}
+
+
+
+int main()
+{
+	
+	DWORD aProcesses[1024];
+	DWORD cbNeeded;
+	DWORD pid;
+	HWND hwnd;
+	
+	hwnd = FindWindow(NULL, _T("League of Legends"));
+	if(!hwnd)
+		{
+			cout << "hwnd error\n";
+			cin.get();
+		}
+	else
+		{
+			GetWindowThreadProcessId(hwnd, &pid);
+
+			DWORD cProcesses;
+			unsigned int i;
+
+			if (!EnumProcesses(aProcesses, sizeof(aProcesses), &cbNeeded))
+				return 1;
+
+			cProcesses = cbNeeded / sizeof(DWORD);
+
+			PrintModules(pid);
+
+			Sleep(99999);
+
+			return 0;
+		
+	}
+}
